@@ -6,7 +6,6 @@ quotes = [
     {"id": 1, "author": "Einstein", "quote": "Imagination is more important than knowledge"},
     {"id": 2, "author": "Yoda", "quote": "Do, or do not. There is no try."},
     {"id": 3, "author": "Nietzsche", "quote": "He who has a why can bear almost any how."},
-
 ]
 
 @app.route("/")
@@ -47,7 +46,7 @@ def get_quote_by_id(id):
 def add_quote():
     data = request.get_json()
 
-    if not data or "author" not in data or "text" not in data:
+    if not data or "author" not in data or "quote" not in data:
         return jsonify({"error": "Invalid data. Must include 'author' and 'text'."}), 400
 
     # Generate a new ID (find max ID + 1)
@@ -58,11 +57,54 @@ def add_quote():
     new_quote = {
         "id": new_id,
         "author": data["author"],
-        "text": data["text"]
+        "quote": data["quote"]
     }
 
     quotes.append(new_quote)
     return jsonify({"message": "Quote added successfully!"}), 201
+
+
+@app.route("/api/quote/<int:quote_id>", methods=["PATCH"])
+def edit_quote(quote_id):
+    global quotes
+
+    data = request.get_json()
+
+    if not data or ("author" not in data and 'quote' not in data):
+        return jsonify({"error": "Invalid data. Must include author or text."}), 400
+
+    quote_to_edit = None
+
+    for quote in quotes:
+        if quote["id"] == quote_id:
+            quote_to_edit = quote
+            break
+
+    if quote_to_edit is None:
+        return jsonify({"error": "Quote not found"}), 404
+
+    if "author" in data:
+        quote_to_edit["author"] = data["author"]
+    if "quote" in data:
+        quote_to_edit["quote"] = data["quote"]
+
+    return jsonify({"message": f"Quote ID: {quote_id} edited.", "quote" :quote_to_edit}), 200
+
+@app.route("/api/quote/<int:quote_id>", methods=["DELETE"])
+def delete_quote(quote_id):
+    global quotes
+
+    for quote in quotes:
+        if quote["id"] == quote_id:
+            quote_to_delete = quote
+            break
+
+    if quote_to_delete is None:
+        return jsonify({"error": "Quote not found"}), 404
+
+    quotes.remove(quote_to_delete)
+    return jsonify({"message": f"Quote ID: {quote_id} deleted."}), 200
+
 
 @app.route("/hello")
 def hello():
